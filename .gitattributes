@@ -1,2 +1,70 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+import streamlit as st
+import joblib
+import numpy as np
+
+# Load the trained model
+model = joblib.load(r"C:\Users\R143H\Downloads\review\project\movie_rating_model.pkl")
+
+# Add custom HTML for a GIF background
+st.markdown(
+    """
+    <style>
+    body {
+        background-image: url('https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExc3g5YXN1ZzI0ZDd1dGZscGw1aGsydmRlbGN5MGxidHFxcmYyMXU5byZlcD12MV9naWZzX3NlYXJjaCZjdD1n/3lvqNXheb679S/giphy.gif');
+        background-size: cover;
+        color: white;
+    }
+    .stApp {
+        background-color: rgba(0, 0, 0, 0.8);
+        border-radius: 15px;
+        padding: 20px;
+        margin: 50px auto;
+        max-width: 800px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+# Streamlit app setup
+st.title("Movie Rating Predictor")
+
+# Input fields for user data
+movie_rated = st.selectbox(
+    "Select Movie Rating:",
+    options=["G", "PG", "PG-13", "R"]
+)
+
+run_length = st.number_input("Enter Run Length (in minutes):", min_value=1)
+num_raters = st.number_input("Enter Number of Raters:", min_value=1, step=1)
+num_reviews = st.number_input("Enter Number of Reviews:", min_value=1, step=1)
+
+# Assume the missing feature is 'genre'
+genre = st.selectbox(
+    "Select Movie Genre:",
+    options=["Action", "Comedy", "Drama", "Horror", "Sci-Fi"]
+)
+
+# Predict button
+if st.button("Predict Rating"):
+    try:
+        # Convert categorical input to numeric
+        movie_rated_mapping = {'G': 0, 'PG': 1, 'PG-13': 2, 'R': 3}
+        genre_mapping = {'Action': 0, 'Comedy': 1, 'Drama': 2, 'Horror': 3, 'Sci-Fi': 4}
+        
+        movie_rated_numeric = movie_rated_mapping.get(movie_rated, 0)
+        genre_numeric = genre_mapping.get(genre, 0)
+
+        # Create input array for the model
+        input_features = np.array([[movie_rated_numeric, run_length, num_raters, num_reviews, genre_numeric]])
+
+        # Predict the rating
+        predicted_rating = model.predict(input_features)[0]
+
+        # Display the result
+        st.success(f"Predicted Rating: {predicted_rating:.2f}")
+    except Exception as e:
+        st.error(f"Error: {e}")
